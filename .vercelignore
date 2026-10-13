@@ -1,0 +1,5 @@
+# Keep dev tooling out of the deployed site
+scripts/
+qr/
+shots/
+.qrvenv/

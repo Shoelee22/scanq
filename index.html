@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Print Queue — Upload &amp; Token</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <span class="brandmark">Q</span>
+        <span class="brandtext"><strong>ScanQ</strong><small><span data-shop-name>Stationery Shop</span> · Print queue</small></span>
+      </div>
+      <span class="demo-tag" data-demo-tag hidden>DEMO</span>
+    </header>
+
+    <div class="cfg-warn" data-cfg-warn hidden>
+      Not connected yet. Add your Supabase URL and anon key in <code>config.js</code>,
+      or open with <code>?demo=1</code> to preview.
+    </div>
+
+    <!-- ============ UPLOAD FORM ============ -->
+    <main id="view-form">
+      <h1 class="page">Skip the line.<br />Print from your phone.</h1>
+      <p class="sub">Upload your file, pick your print options, and get a token.
+        Watch your turn live — no waiting at the counter.</p>
+
+      <ol class="steps">
+        <li><span class="stepn">1</span><strong>Scan</strong><span>the QR code at the counter</span></li>
+        <li><span class="stepn">2</span><strong>Upload</strong><span>your PDF or photo, set print options</span></li>
+        <li><span class="stepn">3</span><strong>Token</strong><span>get your number, track it live</span></li>
+      </ol>
+
+      <ul class="trustrow">
+        <li><b>✓</b> No app needed</li>
+        <li><b>✓</b> Live token status</li>
+        <li><b>✓</b> Free to use</li>
+      </ul>
+
+      <div style="height:22px"></div>
+
+      <form id="uploadForm" class="card stack" novalidate>
+        <div class="field" data-f="name">
+          <label class="lbl" for="inName">Your name</label>
+          <input type="text" id="inName" autocomplete="name" placeholder="e.g. Aarav Mehta" />
+          <div class="err">Please enter your name.</div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="inPhone">Phone <span style="color:var(--faint);font-weight:500">(optional)</span></label>
+          <input type="tel" id="inPhone" autocomplete="tel" inputmode="tel" placeholder="For the shop to reach you" />
+        </div>
+
+        <div class="field" data-f="file">
+          <span class="lbl">Your file</span>
+          <div class="dropzone" id="dz" role="button" tabindex="0" aria-label="Choose file to upload">
+            <div class="dz-title">Tap to choose a file</div>
+            <div class="dz-sub">PDF, JPG or PNG · up to <span data-max-mb>20</span> MB</div>
+          </div>
+          <input type="file" id="inFile" accept=".pdf,.png,.jpg,.jpeg,.webp" hidden />
+          <div id="fileChip" hidden></div>
+          <div class="err">Please choose a file to print.</div>
+        </div>
+
+        <div class="field">
+          <span class="lbl">Print options</span>
+          <div class="seg" id="segColor" role="group" aria-label="Colour mode">
+            <button type="button" data-v="bw" aria-pressed="true">Black &amp; white</button>
+            <button type="button" data-v="color" aria-pressed="false">Colour</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="lbl">Copies</span>
+          <div class="stepper">
+            <button type="button" id="cpMinus" aria-label="Fewer copies">−</button>
+            <span class="val" id="cpVal">1</span>
+            <button type="button" id="cpPlus" aria-label="More copies">+</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="lbl">Pages</span>
+          <label class="radio-row"><input type="radio" name="pages" value="all" checked /> All pages</label>
+          <label class="radio-row"><input type="radio" name="pages" value="custom" />
+            <input type="text" id="inPages" placeholder="e.g. 1-5, 8" aria-label="Page range" disabled /></label>
+        </div>
+
+        <div class="field">
+          <div class="togglerow">
+            <span class="t-label">Double-sided</span>
+            <span class="switch"><input type="checkbox" id="inDuplex" /><span class="track"></span></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="inNote">Note for the shop <span style="color:var(--faint);font-weight:500">(optional)</span></label>
+          <textarea id="inNote" placeholder="e.g. A4 size, spiral binding"></textarea>
+        </div>
+
+        <div>
+          <button type="submit" class="btn primary" id="btnSubmit">Get my token</button>
+          <div class="progress" id="prog"><i></i></div>
+        </div>
+      </form>
+    </main>
+
+    <!-- ============ TOKEN / STATUS ============ -->
+    <main id="view-token" hidden>
+      <div class="card token-hero">
+        <div class="k">YOUR TOKEN</div>
+        <div class="n" id="tokenNum">–</div>
+        <div class="pos" id="queuePos"></div>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div class="card">
+        <div class="kv"><span class="k">Name</span><span class="v" id="dName"></span></div>
+        <div class="kv"><span class="k">File</span><span class="v" id="dFile"></span></div>
+        <div class="kv"><span class="k">Print</span><span class="v" id="dSettings"></span></div>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div class="card">
+        <h2 class="sec" style="margin-top:0">Status</h2>
+        <ul class="timeline" id="timeline">
+          <li data-s="waiting"><span class="dot"></span><div><div class="t">In queue</div><div class="d">Waiting for the shop to start</div></div></li>
+          <li data-s="printing"><span class="dot"></span><div><div class="t">Printing</div><div class="d">Your pages are coming out now</div></div></li>
+          <li data-s="completed"><span class="dot"></span><div><div class="t">Ready for pickup</div><div class="d">Show this screen at the counter</div></div></li>
+        </ul>
+      </div>
+
+      <div style="height:14px"></div>
+      <button class="btn ghost block" id="btnAgain">Upload another file</button>
+    </main>
+
+    <footer class="foot">
+      <span class="fbrand"><span class="brandmark">Q</span>ScanQ</span>
+      <a href="admin.html">Shop owner? Open dashboard</a>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script type="module" src="customer.js"></script>
+  <script>
+    // If the module above never booted (e.g. page opened via file://),
+    // tell the user why instead of failing silently.
+    setTimeout(function () {
+      if (window.__sqBoot) return;
+      var t = document.getElementById("toast");
+      t.textContent = "Preview tip: serve this folder over HTTP (deployed URL, or run: python3 -m http.server) — it does not run from file://.";
+      t.classList.add("show");
+    }, 2500);
+  </script>
+</body>
+</html>
